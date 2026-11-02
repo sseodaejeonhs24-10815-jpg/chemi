@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHEM Dictionary | 화학용어 사전</title>
+  <style>
+    :root { --navy:#142b4a; --blue:#2878c8; --pale:#eef5fc; --ink:#1f2d3d; --muted:#66788a; --line:#dce5ee; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Arial,"Noto Sans KR",sans-serif; background:#f6f8fb; color:var(--ink); }
+    header { background:linear-gradient(125deg,#102744,#2469a8); color:white; padding:34px 20px 42px; }
+    .top { max-width:1050px; margin:auto; }
+    .brand { font-size:13px; letter-spacing:2px; opacity:.8; font-weight:bold; }
+    h1 { margin:12px 0 8px; font-size:clamp(28px,5vw,42px); }
+    header p { margin:0; color:#dceafa; }
+    main { max-width:1050px; margin:-20px auto 50px; padding:0 18px; }
+    .search-panel { background:white; border-radius:16px; padding:20px; box-shadow:0 8px 28px #17345212; }
+    .search-row { display:flex; gap:10px; }
+    input { flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; padding:14px 15px; font-size:16px; outline:none; }
+    input:focus { border-color:var(--blue); box-shadow:0 0 0 3px #2878c81c; }
+    button { border:0; border-radius:10px; padding:12px 17px; cursor:pointer; font-size:14px; font-weight:bold; }
+    .search-btn { background:var(--blue); color:white; }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin-top:15px; }
+    .filter { background:#f0f4f8; color:#42566b; }
+    .filter.active { background:var(--navy); color:white; }
+    .section-head { display:flex; justify-content:space-between; align-items:center; margin:28px 2px 14px; gap:12px; }
+    h2 { font-size:19px; margin:0; }
+    #count { color:var(--muted); font-size:13px; }
+    .layout { display:grid; grid-template-columns:1.25fr .75fr; gap:16px; align-items:start; }
+    .terms { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .term-card, .detail, .favorites { background:white; border:1px solid var(--line); border-radius:14px; }
+    .term-card { padding:16px; cursor:pointer; transition:.15s; }
+    .term-card:hover { transform:translateY(-2px); border-color:#9fc5e8; box-shadow:0 6px 18px #17345210; }
+    .term-card.selected { border:2px solid var(--blue); padding:15px; }
+    .term-top { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .term-card h3 { margin:0; font-size:17px; }
+    .english { color:var(--muted); font-size:12px; margin-top:5px; }
+    .tag { display:inline-block; margin-top:12px; background:var(--pale); color:#28669f; padding:5px 8px; border-radius:20px; font-size:11px; }
+    .star { background:transparent; color:#9aa8b5; padding:2px 4px; font-size:20px; }
+    .star.saved { color:#e2a526; }
+    .detail { padding:20px; position:sticky; top:15px; min-height:230px; }
+    .detail h2 { font-size:24px; margin:8px 0 4px; }
+    .detail .english { font-size:13px; }
+    .detail p { line-height:1.7; font-size:14px; }
+    .detail h4 { margin:20px 0 6px; color:var(--navy); }
+    .hint { color:var(--muted); line-height:1.6; font-size:14px; }
+    .favorites { padding:16px; margin-top:16px; }
+    .favorites h3 { margin:0 0 10px; font-size:15px; }
+    .fav-list { display:flex; flex-wrap:wrap; gap:7px; }
+    .fav-chip { background:#fff7e5; color:#805b12; padding:7px 10px; border-radius:20px; font-size:12px; cursor:pointer; }
+    .empty { grid-column:1/-1; padding:28px; background:white; border:1px dashed var(--line); border-radius:14px; text-align:center; color:var(--muted); }
+    footer { text-align:center; color:#8795a3; font-size:12px; padding:20px; }
+    @media(max-width:720px) { .layout { grid-template-columns:1fr; } .detail { position:static; grid-row:1; } .terms { grid-template-columns:1fr; } .search-row { flex-direction:column; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">SCIENCE • LEARNING • DISCOVERY</div>
+    <h1>CHEM Dictionary</h1>
+    <p>어렵게 느껴지는 화학 용어를 쉽고 정확하게 찾아보세요.</p>
+  </div>
+</header>
+<main>
+  <section class="search-panel">
+    <div class="search-row">
+      <input id="search" type="search" placeholder="예: 원자, 촉매, 산화 환원..." aria-label="화학 용어 검색">
+      <button class="search-btn" id="searchBtn">검색</button>
+    </div>
+    <div class="filters" id="filters"></div>
+  </section>
+
+  <div class="section-head">
+    <h2>화학 용어 둘러보기</h2>
+    <span id="count"></span>
+  </div>
+  <section class="layout">
+    <div class="terms" id="terms"></div>
+    <aside>
+      <div class="detail" id="detail">
+        <div class="tag">용어 설명</div>
+        <h2>용어를 선택해 보세요</h2>
+        <p class="hint">왼쪽 목록에서 궁금한 화학 용어를 누르면 뜻과 예시를 확인할 수 있습니다.</p>
+      </div>
+      <div class="favorites">
+        <h3>★ 즐겨찾기</h3>
+        <div class="fav-list" id="favList"><span class="hint">아직 저장한 용어가 없습니다.</span></div>
+      </div>
+    </aside>
+  </section>
+</main>
+<footer>CHEM Dictionary · 학습을 위한 기초 화학 용어 사전</footer>
+<script>
+const data = [
+ {name:"원자",en:"Atom",cat:"일반화학",desc:"물질을 이루는 기본 단위입니다. 원자는 원자핵과 그 주위를 움직이는 전자로 이루어져 있습니다.",ex:"수소 원자는 양성자 1개와 전자 1개로 이루어져 있습니다."},
+ {name:"분자",en:"Molecule",cat:"일반화학",desc:"두 개 이상의 원자가 화학 결합으로 연결되어 독립적인 입자처럼 행동하는 단위입니다.",ex:"물(H₂O)은 수소 원자 2개와 산소 원자 1개가 결합한 분자입니다."},
+ {name:"원소",en:"Element",cat:"일반화학",desc:"같은 종류의 원자로만 이루어진 물질의 기본 성분입니다. 원소는 원자번호로 구별됩니다.",ex:"수소(H), 산소(O), 철(Fe)은 각각 하나의 원소입니다."},
+ {name:"이온",en:"Ion",cat:"일반화학",desc:"원자가 전자를 잃거나 얻어 전하를 띠게 된 입자입니다. 양이온은 양전하, 음이온은 음전하를 가집니다.",ex:"나트륨 이온(Na⁺)은 나트륨 원자가 전자 1개를 잃어 만들어집니다."},
+ {name:"몰",en:"Mole",cat:"일반화학",desc:"물질의 양을 나타내는 단위입니다. 1몰에는 약 6.022×10²³개의 입자가 들어 있습니다.",ex:"물 1몰에는 약 6.022×10²³개의 물 분자가 있습니다."},
+ {name:"화학 결합",en:"Chemical Bond",cat:"일반화학",desc:"원자들이 더 안정한 상태가 되기 위해 서로 연결되는 힘입니다. 대표적으로 이온 결합과 공유 결합이 있습니다.",ex:"물 분자에서는 수소와 산소가 공유 결합을 합니다."},
+ {name:"산과 염기",en:"Acid and Base",cat:"일반화학",desc:"산은 일반적으로 수용액에서 수소 이온을 내놓고, 염기는 수소 이온을 받아들이거나 수산화 이온을 내놓는 물질입니다.",ex:"염산은 산, 수산화 나트륨은 염기의 대표적인 예입니다."},
+ {name:"산화·환원",en:"Oxidation-Reduction",cat:"일반화학",desc:"산화는 전자를 잃는 과정이고 환원은 전자를 얻는 과정입니다. 두 과정은 항상 함께 일어납니다.",ex:"철이 녹스는 현상은 철의 산화와 관련이 있습니다."},
+ {name:"탄화수소",en:"Hydrocarbon",cat:"유기화학",desc:"탄소와 수소 원자만으로 이루어진 유기 화합물입니다. 알케인, 알켄, 알카인 등이 포함됩니다.",ex:"메테인(CH₄)은 가장 간단한 탄화수소입니다."},
+ {name:"고분자",en:"Polymer",cat:"유기화학",desc:"작은 분자인 단량체가 반복적으로 연결되어 만들어진 큰 분자입니다.",ex:"플라스틱, 고무, 단백질 등이 고분자에 해당합니다."},
+ {name:"작용기",en:"Functional Group",cat:"유기화학",desc:"유기 분자의 화학적 성질과 반응성을 결정하는 원자 또는 원자단입니다.",ex:"알코올에는 하이드록실기(-OH)가 들어 있습니다."},
+ {name:"촉매",en:"Catalyst",cat:"화학공학",desc:"화학 반응의 활성화 에너지를 낮춰 반응 속도를 높이지만, 반응 후에도 본질적으로 소모되지 않는 물질입니다.",ex:"자동차 배기가스 정화 장치에는 유해 물질을 줄이는 촉매가 사용됩니다."},
+ {name:"증류",en:"Distillation",cat:"화학공학",desc:"물질마다 끓는점이 다른 성질을 이용해 혼합물을 분리하는 방법입니다.",ex:"원유를 끓는점 차이에 따라 여러 유분으로 나누는 데 사용됩니다."},
+ {name:"반응 속도",en:"Reaction Rate",cat:"화학공학",desc:"일정한 시간 동안 반응물이나 생성물의 농도가 얼마나 변하는지를 나타냅니다.",ex:"온도나 농도, 촉매의 종류에 따라 반응 속도가 달라질 수 있습니다."},
+ {name:"열역학",en:"Thermodynamics",cat:"화학공학",desc:"열과 일, 에너지의 이동 및 변환을 다루는 학문입니다. 화학공정의 에너지 효율을 분석할 때 중요합니다.",ex:"공장에서 반응에 필요한 열에너지와 냉각에 필요한 에너지를 계산할 때 활용됩니다."},
+ {name:"흡수",en:"Absorption",cat:"화학공학",desc:"기체 성분이 액체 내부로 녹아 들어가는 분리 과정입니다.",ex:"기체 혼합물에서 이산화탄소를 액체 용매로 제거할 때 사용됩니다."},
+ {name:"결정화",en:"Crystallization",cat:"무기화학",desc:"용액이나 용융물에서 규칙적인 배열을 가진 고체 결정이 만들어지는 과정입니다.",ex:"소금물에서 물을 증발시키면 소금 결정이 만들어질 수 있습니다."},
+ {name:"금속",en:"Metal",cat:"무기화학",desc:"일반적으로 열과 전기를 잘 전달하고, 광택과 연성을 가지는 원소 또는 재료입니다.",ex:"철, 구리, 알루미늄은 산업에서 널리 쓰이는 금속입니다."},
+ {name:"염",en:"Salt",cat:"무기화학",desc:"양이온과 음이온이 정전기적 인력으로 결합한 이온 화합물입니다.",ex:"염화 나트륨(NaCl)은 나트륨 이온과 염화 이온으로 이루어져 있습니다."}
+];
+const categories = ["전체","일반화학","유기화학","무기화학","화학공학"];
+let activeCategory = "전체", selected = null, favorites = [];
+const terms = document.getElementById("terms"), search = document.getElementById("search");
+function renderFilters(){
+ document.getElementById("filters").innerHTML = categories.map(c=>`<button class="filter ${c===activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join("");
+ document.querySelectorAll(".filter").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderTerms();});
+}
+function renderTerms(){
+ const q=search.value.trim().toLowerCase();
+ const filtered=data.filter(d=>(activeCategory==="전체"||d.cat===activeCategory)&&(!q||[d.name,d.en,d.desc,d.cat].join(" ").toLowerCase().includes(q)));
+ document.getElementById("count").textContent=`${filtered.length}개 용어`;
+ terms.innerHTML=filtered.length?filtered.map(d=>`<article class="term-card ${selected===d.name?'selected':''}" data-name="${d.name}">
+  <div class="term-top"><div><h3>${d.name}</h3><div class="english">${d.en}</div></div>
+  <button class="star ${favorites.includes(d.name)?'saved':''}" data-star="${d.name}" aria-label="즐겨찾기">${favorites.includes(d.name)?"★":"☆"}</button></div>
+  <span class="tag">${d.cat}</span></article>`).join(""):`<div class="empty">검색 결과가 없습니다.<br>다른 단어로 검색해 보세요.</div>`;
+ document.querySelectorAll(".term-card").forEach(el=>el.onclick=()=>showDetail(el.dataset.name));
+ document.querySelectorAll(".star").forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.star);});
+}
+function showDetail(name){
+ const d=data.find(x=>x.name===name); if(!d)return; selected=name;
+ document.getElementById("detail").innerHTML=`<span class="tag">${d.cat}</span><h2>${d.name}</h2><div class="english">${d.en}</div><h4>뜻</h4><p>${d.desc}</p><h4>예시</h4><p>${d.ex}</p>`;
+ renderTerms();
+}
+function toggleFavorite(name){
+ favorites=favorites.includes(name)?favorites.filter(x=>x!==name):[...favorites,name];
+ renderTerms();renderFavorites();
+}
+function renderFavorites(){
+ const box=document.getElementById("favList");
+ box.innerHTML=favorites.length?favorites.map(n=>`<button class="fav-chip" data-fav="${n}">${n}</button>`).join(""):`<span class="hint">아직 저장한 용어가 없습니다.</span>`;
+ document.querySelectorAll(".fav-chip").forEach(b=>b.onclick=()=>showDetail(b.dataset.fav));
+}
+search.addEventListener("input",renderTerms);
+document.getElementById("searchBtn").onclick=renderTerms;
+search.addEventListener("keydown",e=>{if(e.key==="Enter")renderTerms();});
+renderFilters();renderTerms();renderFavorites();
+</script>
+</body>
+</html>
